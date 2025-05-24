@@ -1,4 +1,4 @@
-# MCP Headless Gmail Server
+# MCP Headless Gmail Server (NPM & Docker)
 
 [![npm version](https://img.shields.io/npm/v/@peakmojo/mcp-server-headless-gmail.svg)](https://www.npmjs.com/package/@peakmojo/mcp-server-headless-gmail) [![Docker Pulls](https://img.shields.io/docker/pulls/buryhuang/mcp-headless-gmail)](https://hub.docker.com/r/buryhuang/mcp-headless-gmail) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
