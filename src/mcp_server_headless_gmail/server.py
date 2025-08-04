@@ -172,12 +172,13 @@ class GmailClient:
             
         return body_text, body_size
 
-    def get_recent_emails(self, max_results: int = 10, unread_only: bool = False) -> str:
+    def get_recent_emails(self, max_results: int = 10, unread_only: bool = False, query: str = "") -> str:
         """Get the most recent emails from Gmail
         
         Args:
             max_results: Maximum number of emails to return (default: 10)
             unread_only: Whether to return only unread emails (default: False)
+            query: Gmail search query using Gmail search syntax (default: "")
             
         Returns:
             JSON string with an array of emails containing metadata, snippets, and first 1k chars of body
@@ -196,15 +197,27 @@ class GmailClient:
                 logger.debug(f"Fetching up to {max_results} recent emails from Gmail")
                 
                 # Get list of recent messages
-                query = 'is:unread' if unread_only else ''
-                logger.debug(f"Calling Gmail API to list messages from INBOX with query: '{query}'")
+                search_query = []
+                
+                # Add unread filter if requested
+                if unread_only:
+                    search_query.append('is:unread')
+                
+                # Add custom query if provided
+                if query.strip():
+                    search_query.append(query.strip())
+                
+                # Combine all query parts
+                final_query = ' '.join(search_query)
+                
+                logger.debug(f"Calling Gmail API to list messages from INBOX with query: '{final_query}'")
                 
                 try:
                     response = self.service.users().messages().list(
                         userId='me',
                         maxResults=max_results,
                         labelIds=['INBOX'],
-                        q=query
+                        q=final_query
                     ).execute()
                     
                     logger.debug(f"API Response received: {json.dumps(response)[:200]}...")
@@ -495,7 +508,8 @@ async def main():
                     "properties": {
                         "google_access_token": {"type": "string", "description": "Google OAuth2 access token"},
                         "max_results": {"type": "integer", "description": "Maximum number of emails to return (default: 10)"},
-                        "unread_only": {"type": "boolean", "description": "Whether to return only unread emails (default: False)"}
+                        "unread_only": {"type": "boolean", "description": "Whether to return only unread emails (default: False)"},
+                        "query": {"type": "string", "description": "Gmail search query using Gmail search syntax (e.g., 'from:example@gmail.com', 'subject:important', 'has:attachment')"}
                     },
                     "required": ["google_access_token"]
                 },
@@ -581,8 +595,9 @@ async def main():
                         
                         max_results = int(arguments.get("max_results", 10))
                         unread_only = bool(arguments.get("unread_only", False))
-                        logger.debug(f"Calling get_recent_emails with max_results={max_results} and unread_only={unread_only}")
-                        results = gmail.get_recent_emails(max_results=max_results, unread_only=unread_only)
+                        query = str(arguments.get("query", ""))
+                        logger.debug(f"Calling get_recent_emails with max_results={max_results}, unread_only={unread_only}, query='{query}'")
+                        results = gmail.get_recent_emails(max_results=max_results, unread_only=unread_only, query=query)
                         logger.debug(f"get_recent_emails result (first 200 chars): {results[:200]}...")
                         return [types.TextContent(type="text", text=results)]
                     except Exception as e:

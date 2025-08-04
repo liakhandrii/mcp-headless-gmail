@@ -122,17 +122,26 @@ class GmailClient {
     }
   }
 
-  async getRecentEmails({ maxResults = 10, unreadOnly = false } = {}) {
+  async getRecentEmails({ maxResults = 10, unreadOnly = false, query = '' } = {}) {
     const operation = async () => {
       if (!this.gmail) {
         throw new Error('Gmail service not initialized. No valid access token provided.');
       }
-      const query = unreadOnly ? 'is:unread' : '';
+      
+      // Build search query
+      const searchQuery = [];
+      if (unreadOnly) {
+        searchQuery.push('is:unread');
+      }
+      if (query.trim()) {
+        searchQuery.push(query.trim());
+      }
+      const finalQuery = searchQuery.join(' ');
       const res = await this.gmail.users.messages.list({
         userId: 'me',
         maxResults,
         labelIds: ['INBOX'],
-        q: query
+        q: finalQuery
       });
       const messages = res.data.messages || [];
       const emails = [];
@@ -318,14 +327,15 @@ async function main() {
       {
         google_access_token: z.string().describe('Google OAuth2 access token'),
         max_results: z.number().optional().describe('Maximum number of emails to return (default: 10)'),
-        unread_only: z.boolean().optional().describe('Whether to return only unread emails (default: False)')
+        unread_only: z.boolean().optional().describe('Whether to return only unread emails (default: False)'),
+        query: z.string().optional().describe('Gmail search query using Gmail search syntax (e.g., \'from:example@gmail.com\', \'subject:important\', \'has:attachment\')')
       },
-      async ({ google_access_token, max_results = 10, unread_only = false }) => {
+      async ({ google_access_token, max_results = 10, unread_only = false, query = '' }) => {
         try {
           const gmail = new GmailClient({
             accessToken: google_access_token
           });
-          const result = await gmail.getRecentEmails({ maxResults: max_results, unreadOnly: unread_only });
+          const result = await gmail.getRecentEmails({ maxResults: max_results, unreadOnly: unread_only, query: query });
           return { content: [{ type: 'text', text: result }] };
         } catch (error) {
           return { content: [{ type: 'text', text: `Error: ${error.message}` }] };

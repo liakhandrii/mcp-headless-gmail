@@ -21,6 +21,7 @@ A MCP (Model Context Protocol) server that provides get, send Gmails without loc
 ## Features
 
 - Get most recent emails from Gmail with the first 1k characters of the body
+  - Search emails using Gmail's native search syntax
 - Get full email body content in 1k chunks using offset parameter
 - Send emails through Gmail
 - Refresh access tokens separately
@@ -161,6 +162,49 @@ Response includes:
 - First 1000 characters of the email body
 - `body_size_bytes`: Total size of the email body in bytes
 - `contains_full_body`: Boolean indicating if the entire body is included (true) or truncated (false)
+
+#### Email Search with Query Parameter
+
+You can now use Gmail's powerful search syntax to filter emails:
+
+```json
+{
+  "google_access_token": "your_access_token",
+  "max_results": 10,
+  "query": "from:important@company.com"
+}
+```
+
+```json
+{
+  "google_access_token": "your_access_token",
+  "query": "subject:invoice has:attachment",
+  "max_results": 20
+}
+```
+
+```json
+{
+  "google_access_token": "your_access_token",
+  "unread_only": true,
+  "query": "from:notifications@github.com",
+  "max_results": 10
+}
+```
+
+**Supported Query Examples:**
+- `"from:sender@example.com"` - Emails from specific sender
+- `"to:recipient@example.com"` - Emails to specific recipient
+- `"subject:important"` - Emails with "important" in subject
+- `"has:attachment"` - Emails with attachments
+- `"is:starred"` - Starred emails
+- `"is:important"` - Important emails
+- `"after:2024/01/01"` - Emails after specific date
+- `"before:2024/12/31"` - Emails before specific date
+- `"label:work"` - Emails with specific label
+- Complex queries: `"from:boss@company.com OR from:manager@company.com"`
+
+The `query` parameter uses the same search syntax as Gmail's search box. Full documentation: https://support.google.com/mail/answer/7190
 
 #### Getting Full Email Body Content
 
